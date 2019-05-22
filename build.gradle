@@ -32,4 +32,5 @@ repositories {
 
 dependencies {
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.8'
+    compile group: 'org.apache.commons', name: 'commons-csv', version: '1.6'
 }
