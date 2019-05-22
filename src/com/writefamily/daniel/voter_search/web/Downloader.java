@@ -18,16 +18,27 @@
 package com.writefamily.daniel.voter_search.web;
 
 import com.writefamily.daniel.voter_search.Main;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Stack;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
 public class Downloader {
     private Stack<URL> downloads = new Stack<>();
     private List<DownloaderListener> listeners = new ArrayList<>();
+    private final CloseableHttpClient httpClient = HttpClients.createDefault();
 
     public Downloader(Collection<URL> downloads) {
         this.downloads.addAll(downloads);
@@ -52,8 +63,37 @@ public class Downloader {
         while (downloads.size() > 0) {
             final URL url = downloads.pop();
             Main.TASK_SCHEDULER.scheduleTask(() -> {
-                System.out.println(url);
+                try {
+
+                    // this is necessary to trust the self-signed certificate of the OH SOS website
+                    SSLContextBuilder builder = new SSLContextBuilder();
+                    builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+                    SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
+
+                    CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+                    HttpHead httpHead = new HttpHead(url.toURI());
+                    CloseableHttpResponse httpResponse = httpClient.execute(httpHead);
+                    try {
+                        System.out.println(url + ": " + Arrays.asList(httpResponse.getAllHeaders()));
+                    } finally {
+                        httpResponse.close();
+                        httpClient.close();
+                    }
+                } catch (URISyntaxException e) {
+                    Main.fatalError(e);
+                } catch (ClientProtocolException e) {
+                    Main.fatalError(e);
+                } catch (IOException e) {
+                    Main.fatalError(e);
+                } catch (NoSuchAlgorithmException e) {
+                    Main.fatalError(e);
+                } catch (KeyStoreException e) {
+                    Main.fatalError(e, "Try updating your Java version.");
+                } catch (KeyManagementException e) {
+                    Main.fatalError(e, "Try updating your Java version.");
+                }
             });
+
         }
     }
 }
