@@ -22,17 +22,12 @@ import java.util.Stack;
 public class TaskScheduler {
     private final int threads;
     private final Processor[] processors;
-
-    /**
-     * The number of tasks currently assigned to a thread
-     */
     public TaskScheduler(int threads) {
         this.threads = threads;
         this.processors = new Processor[threads];
         for (int i = 0; i < this.processors.length; i++) {
             this.processors[i] = new Processor();
         }
-        System.out.println("[TaskScheduler] " + threads + " threads");
     }
 
     public synchronized void scheduleTask(Runnable task) {
@@ -44,8 +39,11 @@ public class TaskScheduler {
                 min_id = i;
             }
         }
+        if (processors[min_id].getState() == Thread.State.TERMINATED) {
+            processors[min_id] = new Processor();
+        }
         processors[min_id].scheduleTask(task);
-        if (!processors[min_id].isAlive()) {
+        if (processors[min_id].getState() == Thread.State.NEW) {
             processors[min_id].start();
         }
     }
