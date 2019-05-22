@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Daniel Write
+ * Copyright (C) 2019 Daniel Write
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -62,11 +62,12 @@ public class TaskScheduler {
         }
 
         public void run() {
-            while (true) {
+            while (tasks.size() > 0) {
                 try {
                     tasks.pop().run();
                 } catch (Exception e) {
                     // TODO handle general errors
+                    e.printStackTrace();
                 }
             }
         }
