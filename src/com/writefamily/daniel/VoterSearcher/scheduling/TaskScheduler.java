@@ -23,6 +23,7 @@ public class TaskScheduler {
 
     public TaskScheduler(int processors) {
         this.processors = processors;
+        processorArray = new Processor[processors];
         for (int i = 0; i < processors; i++) {
             processorArray[i] = new Processor(i + 1);
         }
