@@ -15,6 +15,10 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/**
+ * This whole module has a ton of problems due to being poorly planned. Most of its codebase is effectively dead, but it
+ * works without problems so I am hesitant to touch it right now.
+ */
 package com.writefamily.daniel.VoterSearcher.analysis;
 
 import org.apache.commons.csv.CSVFormat;
