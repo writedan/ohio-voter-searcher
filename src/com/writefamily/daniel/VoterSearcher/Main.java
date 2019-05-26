@@ -20,6 +20,9 @@ package com.writefamily.daniel.VoterSearcher;
 import com.writefamily.daniel.VoterSearcher.scheduling.TaskScheduler;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Main {
     public static final TaskScheduler TASK_SCHEDULER = new TaskScheduler(Runtime.getRuntime().availableProcessors());
@@ -44,6 +47,33 @@ public class Main {
     public static final File BASE_DIR = new File("datas" + File.separator);
 
     public static void main(String[] args) {
+        List<String> firstName = new ArrayList<>(), lastName = new ArrayList<>(), birthYear = new ArrayList<>(),
+                party = new ArrayList<>(), city = new ArrayList<>(), county = new ArrayList<>();
+        for (int i = 0; i < args.length; i++) {
+            String[] arg = args[i].split("=");
+            String key = arg[0];
+            String val = arg[1];
+            switch (key) {
+                case "FIRST_NAME":
+                    firstName.addAll(Arrays.asList(val.split(";")));
+                    break;
+                case "LAST_NAME":
+                    lastName.add(val);
+                    break;
+                case "BIRTH_YEAR":
+                    birthYear.addAll(Arrays.asList(val.split(";")));
+                    break;
+                case "PARTY":
+                    party.addAll(Arrays.asList(val.split(";")));
+                    break;
+                case "CITY":
+                    city.addAll(Arrays.asList(val.split(";")));
+                    break;
+                case "COUNTY":
+                    county.addAll(Arrays.asList(val.split(";")));
+                    break;
+            }
+        }
 
     }
 }
