@@ -18,12 +18,12 @@
 package com.writefamily.daniel.VoterSearcher.analysis;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.io.*;
+import java.util.*;
 
 /**
  * Contains the learned data of a CVS file
@@ -49,6 +49,38 @@ public class CSVAnalysis {
 
     public boolean equalChecksum(CSVAnalysis csvAnalysis) {
         return checksum == csvAnalysis.checksum;
+    }
+
+    public static CSVAnalysis load(File file) throws IOException {
+        CSVAnalysis analysis = new CSVAnalysis();
+        byte[] checksum = CSVAnalyzer.extractChecksum(file);
+        analysis.setChecksum(checksum);
+
+        DataInputStream dis = new DataInputStream(new FileInputStream(file));
+        dis.skipBytes(16); // skip the checksum as it has already been extracted
+
+        analysis.rawAnalysis = new HashMap<>();
+        analysis.rawAnalysis.put("LAST_NAME", new HashMap<>());
+        analysis.rawAnalysis.put("FIRST_NAME", new HashMap<>());
+        analysis.rawAnalysis.put("BIRTH_YEAR", new HashMap<>());
+        analysis.rawAnalysis.put("PARTY", new HashMap<>());
+        analysis.rawAnalysis.put("CITY", new HashMap<>());
+        for (Map.Entry<String, Map<String, Set<Map.Entry<Long, CSVRecord>>>> typeRecord : analysis.rawAnalysis.entrySet()) {
+            long size = dis.readLong();
+            for (long i = 0; i < size; i++) {
+                String classifer = dis.readUTF();
+                if (null == analysis.rawAnalysis.get(typeRecord.getKey()).get(classifer)) {
+                    analysis.rawAnalysis.get(typeRecord.getKey()).put(classifer, new HashSet<>());
+                }
+                long numRecords = dis.readLong();
+                for (long j = 0; j < numRecords; j++) {
+                    long recordNum = dis.readLong();
+                    analysis.rawAnalysis.get(typeRecord.getKey()).get(classifer).add(new AbstractMap.SimpleEntry<>(recordNum, null));
+                }
+            }
+        }
+
+        return analysis;
     }
 
     public void interpret(Map<String, Map<String, Set<Map.Entry<Long, CSVRecord>>>> rawAnalysis) {
@@ -131,7 +163,45 @@ public class CSVAnalysis {
         return new AnalysisQuery(this, filteredValues);
     }
 
+    public byte[] getChecksum() {
+        return checksum;
+    }
+
     public CSVRecord getRecord(long i) {
         return records.get(i);
+    }
+
+    public void generateRecordStore(Reader reader) throws IOException {
+        CSVFormat vfrFormat = CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim();
+        CSVParser csvParser = new CSVParser(reader, vfrFormat);
+        this.records = CSVAnalyzer.generateRecordStore(csvParser);
+    }
+
+    public void save(File file) throws IOException {
+        DataOutputStream dos = new DataOutputStream(new FileOutputStream(file));
+        if (checksum.length != 16) {
+            throw new IllegalStateException("Checksum must equal 16 bytes");
+        }
+
+        // first 16 bytes are checksum
+        for (byte b : checksum) {
+            dos.writeByte(b);
+        }
+
+        // next FIRST_NAME, LAST_NAME, BIRTH_YEAR, PARTY, and CITY are written in that order
+        for (Map<String, Set<Map.Entry<Long, CSVRecord>>> typeRecord : rawAnalysis.values()) {
+            // we dont care which is which as we know the order they will be saved
+            dos.writeLong(typeRecord.keySet().size()); // how many class records are contained
+            for (Map.Entry<String, Set<Map.Entry<Long, CSVRecord>>> classRecord : typeRecord.entrySet()) {
+                dos.writeUTF(classRecord.getKey());
+                dos.writeLong(classRecord.getValue().size());
+                for (Map.Entry<Long, CSVRecord> records : classRecord.getValue()) {
+                    dos.writeLong(records.getKey().longValue());
+                }
+            }
+        }
+
+        dos.flush();
+        dos.close();
     }
 }

@@ -21,14 +21,21 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.util.*;
 
 /**
  * This class analyzes the CVS files and figures data ranges as to speed up search time
  */
 public class CSVAnalyzer {
+    public static LinkedHashMap<Long, CSVRecord> generateRecordStore(CSVParser csvParser) throws IOException {
+        LinkedHashMap<Long, CSVRecord> recordStore = new LinkedHashMap<>();
+        for (CSVRecord record : csvParser.getRecords()) {
+            recordStore.put(record.getRecordNumber(), record);
+        }
+        return recordStore;
+    }
+
     public static CSVAnalysis analyze(Reader reader) throws IOException {
         CSVFormat vfrFormat = CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim();
         CSVParser csvParser = new CSVParser(reader, vfrFormat);
@@ -75,6 +82,17 @@ public class CSVAnalyzer {
 
         csvAnalysis.interpret(rawAnalysis);
         return csvAnalysis;
+    }
+
+    // get the checksum from a save file
+    public static byte[] extractChecksum(File file) throws IOException {
+        byte[] checksum = new byte[16];
+        DataInputStream dis = new DataInputStream(new FileInputStream(file));
+        for (int i = 0; i < checksum.length; i++) {
+            checksum[i] = dis.readByte();
+        }
+        dis.close();
+        return checksum;
     }
 
     public static String formatRecord(CSVRecord record) {
