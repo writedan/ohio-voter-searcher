@@ -39,18 +39,6 @@ public class CSVAnalysis {
     private byte[] checksum;
     private LinkedHashMap<Long, CSVRecord> records = new LinkedHashMap<>();
 
-    protected void addRecord(CSVRecord record) {
-        records.put(record.getRecordNumber(), record);
-    }
-
-    public void setChecksum(byte[] data) {
-        this.checksum = DigestUtils.md5(data);
-    }
-
-    public boolean equalChecksum(CSVAnalysis csvAnalysis) {
-        return checksum == csvAnalysis.checksum;
-    }
-
     public static CSVAnalysis load(File file) throws IOException {
         CSVAnalysis analysis = new CSVAnalysis();
         byte[] checksum = CSVAnalyzer.extractChecksum(file);
@@ -81,6 +69,14 @@ public class CSVAnalysis {
         }
 
         return analysis;
+    }
+
+    protected void addRecord(CSVRecord record) {
+        records.put(record.getRecordNumber(), record);
+    }
+
+    public boolean equalChecksum(CSVAnalysis csvAnalysis) {
+        return checksum == csvAnalysis.checksum;
     }
 
     public void interpret(Map<String, Map<String, Set<Map.Entry<Long, CSVRecord>>>> rawAnalysis) {
@@ -165,6 +161,10 @@ public class CSVAnalysis {
 
     public byte[] getChecksum() {
         return checksum;
+    }
+
+    public void setChecksum(byte[] data) {
+        this.checksum = DigestUtils.md5(data);
     }
 
     public CSVRecord getRecord(long i) {

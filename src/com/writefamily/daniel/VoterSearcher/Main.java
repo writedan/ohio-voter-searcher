@@ -19,9 +19,11 @@ package com.writefamily.daniel.VoterSearcher;
 
 import com.writefamily.daniel.VoterSearcher.scheduling.TaskScheduler;
 
+import java.io.File;
+
 public class Main {
     public static final TaskScheduler TASK_SCHEDULER = new TaskScheduler(Runtime.getRuntime().availableProcessors());
-    public static final String OVR_BASE_URL = "https://www6.sos.state.oh.us/ords/f?p=VOTERFTP:DOWNLOAD::FILE:NO:2:P2_PRODUCT_NUMBER:%d";
+    public static final String OVR_BASE_URL = "https://www6.sos.state.oh.us/ords/f?p=VOTERFTP:DOWNLOAD::FILE:NO:2:P2_PRODUCT_NUMBER:";
     public static final String[] COUNTY_ARRAY = {
             "ADAMS", "ALLEN", "ASHLAND", "ASHTABULA", "ATHENS", "AUGLAIZE",
             "BELMONT", "BROWN", "BUTLER", "CARROLL", "CHAMPAIGN", "CLARK",
@@ -36,9 +38,10 @@ public class Main {
             "MUSKINGUM", "NOBLE", "OTTAWA", "PAULDING", "PERRY", "PICKAWAY",
             "PIKE", "PORTAGE", "PUTNAM", "RICHLAND", "ROSS", "SANDUSKY",
             "SCIOTO", "SENECA", "SHELBY", "STARK", "SUMMIT", "TRUMBULL",
-            "TUSCARAWAS", "UNION", "VANWERT", "VINTON", "WARREN", "WASHINGTON" +
+            "TUSCARAWAS", "UNION", "VANWERT", "VINTON", "WARREN", "WASHINGTON",
             "WAYNE", "WILLIAMS", "WOOD", "WYANDOT"
     };
+    public static final File BASE_DIR = new File("datas" + File.separator);
 
     public static void main(String[] args) {
 
