@@ -46,7 +46,7 @@ public class CSVAnalyzer {
 
     public static String formatRecord(CSVRecord record) {
         Map<String, String> votingRecord = new HashMap<>();
-        Map<String, String> voter = new HashMap<>();
+        Map<String, Object> voter = new HashMap<>();
         Map<String, String> voterFile = record.toMap();
         for (String key : voterFile.keySet()) {
             if (key.contains("PRIMARY-") || key.contains("GENERAL-") || key.contains("SPECIAL-")) {
@@ -55,6 +55,8 @@ public class CSVAnalyzer {
                 voter.put(key, voterFile.get(key));
             }
         }
+
+        voter.put("VOTER_HISTORY", votingRecord);
         return voter.toString();
     }
 }
