@@ -17,6 +17,8 @@
 
 package com.writefamily.daniel.VoterSearcher.neo_analysis;
 
+import org.apache.commons.csv.CSVRecord;
+
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,5 +37,30 @@ public class CSVFilter {
         }
 
         return this;
+    }
+
+    public boolean isInFilter(CSVRecord record) {
+        boolean okay = true;
+        for (Map.Entry<CSVField, String> filter : filters) {
+            switch (filter.getKey()) {
+                case FIRST_NAME:
+                    okay = okay && record.get("FIRST_NAME").equalsIgnoreCase(filter.getValue());
+                    break;
+                case LAST_NAME:
+                    okay = okay && record.get("LAST_NAME").equalsIgnoreCase(filter.getValue());
+                    break;
+                case BIRTH_YEAR:
+                    okay = okay && record.get("BIRTH_DATE").split("-")[0].equalsIgnoreCase(filter.getValue());
+                    break;
+                case CITY:
+                    okay = okay && record.get("RESIDENTIAL_CITY").equalsIgnoreCase(filter.getValue());
+                    break;
+                case PARTY:
+                    okay = okay && record.get("PARTY_AFFILIATION").equalsIgnoreCase(filter.getValue());
+                    break;
+            }
+        }
+
+        return okay;
     }
 }

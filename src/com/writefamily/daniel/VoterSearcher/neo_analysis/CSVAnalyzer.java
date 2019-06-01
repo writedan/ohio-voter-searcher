@@ -19,15 +19,42 @@ package com.writefamily.daniel.VoterSearcher.neo_analysis;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class CSVAnalyzer {
     protected static CSVFormat CSV_FORMAT = CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim();
 
-    public static void analyze(InputStream inputStream, CSVFilter filter) throws IOException {
+    public static List<CSVRecord> analyze(InputStream inputStream, CSVFilter filter) throws IOException {
         Reader reader = new BufferedReader(new InputStreamReader(inputStream));
         CSVParser parser = new CSVParser(reader, CSVAnalyzer.CSV_FORMAT);
 
+        List<CSVRecord> records = new ArrayList<>();
+        for (CSVRecord record : parser.getRecords()) {
+            if (filter.isInFilter(record)) {
+                records.add(record);
+            }
+        }
+
+        return records;
+    }
+
+    public static String formatRecord(CSVRecord record) {
+        Map<String, String> votingRecord = new HashMap<>();
+        Map<String, String> voter = new HashMap<>();
+        Map<String, String> voterFile = record.toMap();
+        for (String key : voterFile.keySet()) {
+            if (key.contains("PRIMARY-") || key.contains("GENERAL-") || key.contains("SPECIAL-")) {
+                votingRecord.put(key, voterFile.get(key));
+            } else {
+                voter.put(key, voterFile.get(key));
+            }
+        }
+        return voter.toString();
     }
 }
