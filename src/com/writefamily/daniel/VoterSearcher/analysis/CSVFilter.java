@@ -15,7 +15,7 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.writefamily.daniel.VoterSearcher.neo_analysis;
+package com.writefamily.daniel.VoterSearcher.analysis;
 
 import org.apache.commons.csv.CSVRecord;
 

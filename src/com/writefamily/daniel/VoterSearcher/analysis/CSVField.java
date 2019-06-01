@@ -15,7 +15,7 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.writefamily.daniel.VoterSearcher.neo_analysis;
+package com.writefamily.daniel.VoterSearcher.analysis;
 
 public enum CSVField {
     FIRST_NAME, LAST_NAME, BIRTH_YEAR, PARTY, CITY, COUNTY
