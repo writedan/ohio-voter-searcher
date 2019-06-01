@@ -59,6 +59,10 @@ public class AnalysisQuery {
             default:
                 throw new IllegalArgumentException("Unknown type = " + type);
         }*/
+        if (values.length == 0) {
+            return new AnalysisQuery(this.analysis, indexes);
+        }
+
         Set<Long> filteredValues = new TreeSet<>();
         List<String> nifty = Arrays.asList(values);
         outer:

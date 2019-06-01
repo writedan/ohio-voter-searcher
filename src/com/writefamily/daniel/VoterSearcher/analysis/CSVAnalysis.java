@@ -18,7 +18,6 @@
 package com.writefamily.daniel.VoterSearcher.analysis;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
@@ -149,9 +148,15 @@ public class CSVAnalysis {
          }
 
          return new AnalysisQuery(this, filteredValues);*/
+        if (values.length == 0) {
+            return new AnalysisQuery(this, records.keySet());
+        }
+
         Set<Long> filteredValues = new TreeSet<>();
         Map<String, Set<Map.Entry<Long, CSVRecord>>> map = rawAnalysis.get(type);
         for (String value : values) {
+            value = value.toLowerCase();
+            if (map.get(value) == null) continue;
             for (Map.Entry<Long, CSVRecord> entry : map.get(value)) {
                 filteredValues.add(entry.getKey());
             }
@@ -172,8 +177,7 @@ public class CSVAnalysis {
     }
 
     public void generateRecordStore(Reader reader) throws IOException {
-        CSVFormat vfrFormat = CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim();
-        CSVParser csvParser = new CSVParser(reader, vfrFormat);
+        CSVParser csvParser = new CSVParser(reader, CSVAnalyzer.CSV_FORMAT);
         this.records = CSVAnalyzer.generateRecordStore(csvParser);
     }
 

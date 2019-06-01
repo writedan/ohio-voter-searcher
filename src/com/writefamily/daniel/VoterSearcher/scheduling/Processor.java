@@ -53,7 +53,7 @@ public class Processor implements Comparable {
     @Override
     public int compareTo(Object o) {
         if (o == null) {
-            return 1; // something is always greater than nothing
+            return -1; // something is always greater than nothing
         } else if (o instanceof Processor) {
             Processor p = (Processor) o;
             return this.getTaskDensity() - p.getTaskDensity();

@@ -32,6 +32,7 @@ import java.util.*;
  * This class analyzes the CVS files and figures data ranges as to speed up search time
  */
 public class CSVAnalyzer {
+    protected static CSVFormat CSV_FORMAT = CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim();
     public static LinkedHashMap<Long, CSVRecord> generateRecordStore(CSVParser csvParser) throws IOException {
         LinkedHashMap<Long, CSVRecord> recordStore = new LinkedHashMap<>();
         for (CSVRecord record : csvParser.getRecords()) {
@@ -41,8 +42,7 @@ public class CSVAnalyzer {
     }
 
     public static CSVAnalysis analyze(Reader reader) throws IOException {
-        CSVFormat vfrFormat = CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim();
-        CSVParser csvParser = new CSVParser(reader, vfrFormat);
+        CSVParser csvParser = new CSVParser(reader, CSV_FORMAT);
 
         CSVAnalysis csvAnalysis = new CSVAnalysis();
 
@@ -55,11 +55,11 @@ public class CSVAnalyzer {
         rawAnalysis.put("CITY", new HashMap<>());
         for (CSVRecord record : csvParser.getRecords()) {
             csvAnalysis.addRecord(record);
-            String lastName = record.get("LAST_NAME").split("")[0];
-            String firstName = record.get("FIRST_NAME").split("")[0]; // names are indexed by first letter alone
-            String birthYear = record.get("DATE_OF_BIRTH").split("-")[0];
-            String party = record.get("PARTY_AFFILIATION");
-            String city = record.get("RESIDENTIAL_CITY");
+            String lastName = record.get("LAST_NAME")/*.split("")[0]*/.toLowerCase();
+            String firstName = record.get("FIRST_NAME")/*.split("")[0]*/.toLowerCase(); // names are indexed by first letter alone
+            String birthYear = record.get("DATE_OF_BIRTH").split("-")[0].toLowerCase();
+            String party = record.get("PARTY_AFFILIATION").toLowerCase();
+            String city = record.get("RESIDENTIAL_CITY").toLowerCase();
             long recordIndex = record.getRecordNumber();
             if (!rawAnalysis.get("LAST_NAME").containsKey(lastName)) {
                 rawAnalysis.get("LAST_NAME").put(lastName, new HashSet<>());
@@ -100,7 +100,21 @@ public class CSVAnalyzer {
     }
 
     public static String formatRecord(CSVRecord record) {
-        return String.format("%s, %s %s\nRegistered %s", record.get("LAST_NAME"), record.get("FIRST_NAME"),
-                record.get("MIDDLE_NAME"), record.get("PARTY_AFFILIATION"));
+        /*return String.format("%s, %s %s\nRegistered %s", record.get("LAST_NAME"), record.get("FIRST_NAME"),
+                record.get("MIDDLE_NAME"), record.get("PARTY_AFFILIATION"));*/
+        /*return String.format("{LAST_NAME=%s, FIRST_NAME=\"%s %s\", BIRTH_DATE=%2, PART=%s, CITY=%s}", record.get("LAST_NAME"),
+                record.get("FIRST_NAME"), record.get("MIDDLE_NAME"), record.get("BIRTH_DATE"),
+                record.get("PARTY_AFFILIATION"), record.get("RESIDENTIAL_CITY"));*/
+        Map<String, String> votingRecord = new HashMap<>();
+        Map<String, String> voter = new HashMap<>();
+        Map<String, String> voterFile = record.toMap();
+        for (String key : voterFile.keySet()) {
+            if (key.contains("PRIMARY-") || key.contains("GENERAL-") || key.contains("SPECIAL-")) {
+                votingRecord.put(key, voterFile.get(key));
+            } else {
+                voter.put(key, voterFile.get(key));
+            }
+        }
+        return voter.toString();
     }
 }
