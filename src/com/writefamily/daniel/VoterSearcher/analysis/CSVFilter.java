@@ -63,4 +63,15 @@ public class CSVFilter {
 
         return okay;
     }
+
+    public List<String> getValues(CSVField field) {
+        List<String> values = new ArrayList<>();
+        for (Map.Entry<CSVField, String> entry : filters) {
+            if (entry.getKey().equals(field)) {
+                values.add(entry.getValue());
+            }
+        }
+
+        return values;
+    }
 }
