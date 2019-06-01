@@ -17,9 +17,23 @@
 
 package com.writefamily.daniel.VoterSearcher;
 
+import com.writefamily.daniel.VoterSearcher.analysis.CSVAnalyzer;
+import com.writefamily.daniel.VoterSearcher.analysis.CSVField;
+import com.writefamily.daniel.VoterSearcher.analysis.CSVFilter;
 import com.writefamily.daniel.VoterSearcher.scheduling.TaskScheduler;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.util.List;
 
 public class Main {
     public static final TaskScheduler TASK_SCHEDULER = new TaskScheduler(Runtime.getRuntime().availableProcessors());
@@ -44,5 +58,80 @@ public class Main {
     public static final File BASE_DIR = new File("datas" + File.separator);
 
     public static void main(String[] args) {
+        try {
+            CSVFilter filter = CSVFilter.instance();
+            for (String s : args) {
+                try {
+                    String[] arg = s.split("=");
+                    String key = arg[0];
+                    String val = arg[1];
+
+                    CSVField field = CSVField.valueOf(key.toUpperCase());
+                    filter.filter(field, val); // returns self to facillitate chaining, but not necessary
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    // TODO handle this
+                    System.exit(ErrorCode.MALFORMED_PARAMETER.exitCode);
+                } catch (IllegalArgumentException e) {
+                    // TODO handle this too
+                    System.exit(ErrorCode.UNKNOWN_VALUE.exitCode);
+                }
+            }
+
+            // we use the county values to isolate the files to download
+            List<String> counties = filter.getValues(CSVField.COUNTY);
+            int[] countyCodes; // the county codes that will be downloaded and used
+            if (counties.size() == 0) {
+                // use all counties
+                countyCodes = new int[COUNTY_ARRAY.length];
+                for (int i = 0; i < countyCodes.length; i++) {
+                    countyCodes[i] = i + 1;
+                }
+            } else {
+                countyCodes = new int[counties.size()];
+                for (int i = 0; i < countyCodes.length; i++) {
+                    for (int x = 0; x < COUNTY_ARRAY.length; x++) {
+                        if (counties.get(i).equalsIgnoreCase(COUNTY_ARRAY[x])) {
+                            countyCodes[i] = x + 1;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            for (int code : countyCodes) {
+                System.out.println(Main.OVR_BASE_URL + code);
+
+                SSLContextBuilder builder = new SSLContextBuilder();
+                builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+                SSLConnectionSocketFactory scsf = new SSLConnectionSocketFactory(builder.build());
+
+                CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(scsf).build();
+                HttpGet request = new HttpGet(Main.OVR_BASE_URL + code);
+                CloseableHttpResponse response = httpClient.execute(request);
+
+                int contentLength = Integer.parseInt(response.getFirstHeader("Content-Length").getValue());
+
+                ByteArrayOutputStream dataStore = new ByteArrayOutputStream();
+                int n, d = 0;
+                System.out.println("0.0 %");
+                while ((n = response.getEntity().getContent().read()) != -1) {
+                    dataStore.write(n);
+                    d += 1;
+                    double percent = Math.round(d / (double) contentLength * 100) / 100.0;
+                    if (percent % 5 == 0 && percent > 0) {
+                        System.out.println((percent * 100) + " %");
+                    }
+                }
+                byte[] data = dataStore.toByteArray();
+
+                List<CSVRecord> records = CSVAnalyzer.analyze(new ByteArrayInputStream(data), filter);
+                for (CSVRecord record : records) {
+                    System.out.println(CSVAnalyzer.formatRecord(record).toString());
+                }
+            }
+        } catch (Throwable error) {
+            // TODO handle this
+            System.exit(ErrorCode.GENERAL_ERROR.exitCode);
+        }
     }
 }
