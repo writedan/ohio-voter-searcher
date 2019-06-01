@@ -17,6 +17,7 @@
 
 package com.writefamily.daniel.VoterSearcher.neo_analysis;
 
-public enum CSVFields {
-    FIRST_NAME, LAST_NAME, BIRTH_YEAR, PARTY, CITY
+public enum CSVField {
+    FIRST_NAME, LAST_NAME, BIRTH_YEAR, PARTY, CITY, COUNTY
+    // county is only used in initial state
 }

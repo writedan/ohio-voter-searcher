@@ -17,5 +17,23 @@
 
 package com.writefamily.daniel.VoterSearcher.neo_analysis;
 
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 public class CSVFilter {
+    private final List<Map.Entry<CSVField, String>> filters = new ArrayList<>();
+
+    public static CSVFilter instance() {
+        return new CSVFilter();
+    }
+
+    public CSVFilter filter(CSVField field, String... values) {
+        for (String value : values) {
+            filters.add(new AbstractMap.SimpleEntry<>(field, value));
+        }
+
+        return this;
+    }
 }

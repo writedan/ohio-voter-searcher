@@ -18,7 +18,16 @@
 package com.writefamily.daniel.VoterSearcher.neo_analysis;
 
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+
+import java.io.*;
 
 public class CSVAnalyzer {
     protected static CSVFormat CSV_FORMAT = CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim();
+
+    public static void analyze(InputStream inputStream, CSVFilter filter) throws IOException {
+        Reader reader = new BufferedReader(new InputStreamReader(inputStream));
+        CSVParser parser = new CSVParser(reader, CSVAnalyzer.CSV_FORMAT);
+
+    }
 }
