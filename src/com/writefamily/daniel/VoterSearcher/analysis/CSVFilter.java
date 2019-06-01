@@ -19,10 +19,7 @@ package com.writefamily.daniel.VoterSearcher.analysis;
 
 import org.apache.commons.csv.CSVRecord;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CSVFilter {
     private final List<Map.Entry<CSVField, String>> filters = new ArrayList<>();
@@ -73,5 +70,14 @@ public class CSVFilter {
         }
 
         return values;
+    }
+
+    public Set<CSVField> presentFields() {
+        Set<CSVField> presentFields = new HashSet<>();
+        for (Map.Entry<CSVField, String> entry : filters) {
+            presentFields.add(entry.getKey());
+        }
+
+        return presentFields;
     }
 }
