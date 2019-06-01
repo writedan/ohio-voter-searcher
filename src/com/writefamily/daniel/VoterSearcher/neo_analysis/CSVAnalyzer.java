@@ -44,7 +44,7 @@ public class CSVAnalyzer {
         return records;
     }
 
-    public static String formatRecord(CSVRecord record) {
+    public static Map<String, Object> formatRecord(CSVRecord record) {
         Map<String, String> votingRecord = new HashMap<>();
         Map<String, Object> voter = new HashMap<>();
         Map<String, String> voterFile = record.toMap();
@@ -57,6 +57,6 @@ public class CSVAnalyzer {
         }
 
         voter.put("VOTER_HISTORY", votingRecord);
-        return voter.toString();
+        return voter;
     }
 }
