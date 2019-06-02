@@ -127,6 +127,9 @@ public class Main {
                             countySaveFile.createNewFile();
                             inputStream = new FileInputStream(countySaveFile);
                             contentLength = countySaveFile.length();
+
+                            DataInputStream dateReader = new DataInputStream(inputStream);
+                            dateReader.readLong(); // the value is there we just dont care about it
                         }
 
                         serializer.beginCountyDownload(code, contentLength);
