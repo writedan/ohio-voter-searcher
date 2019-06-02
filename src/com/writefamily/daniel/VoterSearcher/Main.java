@@ -132,7 +132,7 @@ public class Main {
             }
         } catch (Throwable error) {
             // TODO handle this
-            error.printStackTrace();
+            error.printStackTrace(System.err);
             System.exit(ErrorCode.GENERAL_ERROR.exitCode);
         }
     }
