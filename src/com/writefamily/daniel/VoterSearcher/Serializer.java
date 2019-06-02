@@ -29,7 +29,7 @@ public class Serializer {
         this.outputStream = new DataOutputStream(outputStream);
     }
 
-    public void write(byte[] packet) throws IOException {
+    public synchronized void write(byte[] packet) throws IOException {
         outputStream.writeInt(packet.length);
         for (byte b : packet) {
             outputStream.writeByte(b);
@@ -39,7 +39,7 @@ public class Serializer {
     }
 
     // call this method when a county begins downloading
-    public void beginCountyDownload(int countyCode, long length) throws IOException {
+    public synchronized void beginCountyDownload(int countyCode, long length) throws IOException {
         ByteArrayOutputStream store = new ByteArrayOutputStream();
         DataOutputStream mani = new DataOutputStream(store);
 
@@ -51,7 +51,7 @@ public class Serializer {
     }
 
     // call this method when a county progresses its download
-    public void countyDownloadProgress(int countyCode, int percent) throws IOException {
+    public synchronized void countyDownloadProgress(int countyCode, int percent) throws IOException {
         ByteArrayOutputStream store = new ByteArrayOutputStream();
         DataOutputStream mani = new DataOutputStream(store);
 
@@ -63,7 +63,7 @@ public class Serializer {
     }
 
     // call this method when a county completes download/analyze
-    public void countyComplete(int countyCode) throws IOException {
+    public synchronized void countyComplete(int countyCode) throws IOException {
         ByteArrayOutputStream store = new ByteArrayOutputStream();
         DataOutputStream mani = new DataOutputStream(store);
 
@@ -74,7 +74,7 @@ public class Serializer {
     }
 
     // call this method when a new record is found
-    public void recordFound(int countyCode, CSVRecord record) throws IOException {
+    public synchronized void recordFound(int countyCode, CSVRecord record) throws IOException {
         ByteArrayOutputStream store = new ByteArrayOutputStream();
         DataOutputStream mani = new DataOutputStream(store);
         ObjectOutputStream recordWriter = new ObjectOutputStream(mani);
