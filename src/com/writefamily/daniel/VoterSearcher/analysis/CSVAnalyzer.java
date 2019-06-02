@@ -66,4 +66,15 @@ public class CSVAnalyzer {
         voter.put("VOTER_HISTORY", votingRecord);
         return voter;
     }
+
+    public static long getSaveDate(File countySaveFile) throws IOException {
+        if (!countySaveFile.exists()) {
+            return 0;
+        }
+
+        DataInputStream stream = new DataInputStream(new FileInputStream(countySaveFile));
+        long ret = stream.readLong();
+        stream.close();
+        return ret;
+    }
 }

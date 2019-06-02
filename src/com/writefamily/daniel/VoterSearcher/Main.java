@@ -30,10 +30,9 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.InputStream;
+import java.io.*;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 public class Main {
@@ -56,9 +55,10 @@ public class Main {
             "TUSCARAWAS", "UNION", "VANWERT", "VINTON", "WARREN", "WASHINGTON",
             "WAYNE", "WILLIAMS", "WOOD", "WYANDOT"
     };
-    public static final File BASE_DIR = new File("datas" + File.separator);
+    public static final File BASE_DIR = new File(".ohio_voter_searcher" + File.separator);
 
     public static void main(String[] args) {
+        Main.BASE_DIR.mkdirs();
         try {
             CSVFilter filter = CSVFilter.instance();
             for (String s : args) {
@@ -100,19 +100,44 @@ public class Main {
             CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(scsf).build();
 
             for (int code : countyCodes) {
-                HttpGet request = new HttpGet(Main.OVR_BASE_URL + code);
-                CloseableHttpResponse response = httpClient.execute(request);
+                File countySaveFile = new File(Main.BASE_DIR.getAbsolutePath() + File.separator + COUNTY_ARRAY[code - 1]);
+                //long days = ChronoUnit.DAYS.between(LocalDate.now(), LocalDate.ofEpochDay(CSVAnalyzer.getSaveDate(countySaveFile)));
+                long days = ChronoUnit.DAYS.between(LocalDate.ofEpochDay(CSVAnalyzer.getSaveDate(countySaveFile)), LocalDate.now());
 
-                int contentLength = Integer.parseInt(response.getFirstHeader("Content-Length").getValue());
+                InputStream inputStream;
+                OutputStream outputStream = null;
+                long contentLength;
+                if (days >= 8) {
+                    HttpGet request = new HttpGet(Main.OVR_BASE_URL + code);
+                    CloseableHttpResponse response = httpClient.execute(request);
+
+                    contentLength = Integer.parseInt(response.getFirstHeader("Content-Length").getValue());
+                    inputStream = response.getEntity().getContent();
+
+                    outputStream = new FileOutputStream(countySaveFile);
+
+                    DataOutputStream dateWriter = new DataOutputStream(outputStream);
+                    dateWriter.writeLong(LocalDate.now().toEpochDay());
+                    dateWriter.flush();
+                } else {
+                    countySaveFile.createNewFile();
+                    inputStream = new FileInputStream(countySaveFile);
+                    contentLength = countySaveFile.length();
+                }
+
                 serializer.beginCountyDownload(code, contentLength);
 
                 ByteArrayOutputStream dataStore = new ByteArrayOutputStream();
                 int n, oldPercent = 0;
                 double transferred = 0.0;
 
-                InputStream inputStream = response.getEntity().getContent();
                 while ((n = inputStream.read()) != -1) {
                     dataStore.write(n);
+                    if (outputStream != null) {
+                        outputStream.write(n); // save file if it doesnt exist
+                        outputStream.flush();
+                    }
+
                     transferred += 1;
                     int percent = (int) ((transferred / contentLength) * 100);
                     if (percent > oldPercent) {

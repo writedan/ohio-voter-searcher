@@ -39,13 +39,13 @@ public class Serializer {
     }
 
     // call this method when a county begins downloading
-    public void beginCountyDownload(int countyCode, int length) throws IOException {
+    public void beginCountyDownload(int countyCode, long length) throws IOException {
         ByteArrayOutputStream store = new ByteArrayOutputStream();
         DataOutputStream mani = new DataOutputStream(store);
 
         mani.writeByte(PacketCode.BEGIN_COUNTY_DOWNLOAD.code);
         mani.writeInt(countyCode);
-        mani.writeInt(length);
+        mani.writeLong(length);
 
         this.write(store.toByteArray());
     }
