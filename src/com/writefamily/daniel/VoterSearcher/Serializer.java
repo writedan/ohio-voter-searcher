@@ -20,10 +20,7 @@ package com.writefamily.daniel.VoterSearcher;
 import com.writefamily.daniel.VoterSearcher.analysis.CSVAnalyzer;
 import org.apache.commons.csv.CSVRecord;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 
 public class Serializer {
     private DataOutputStream outputStream;
@@ -80,10 +77,11 @@ public class Serializer {
     public void recordFound(int countyCode, CSVRecord record) throws IOException {
         ByteArrayOutputStream store = new ByteArrayOutputStream();
         DataOutputStream mani = new DataOutputStream(store);
+        ObjectOutputStream recordWriter = new ObjectOutputStream(mani);
 
         mani.writeByte(PacketCode.RECORD_FOUND.code);
         mani.writeInt(countyCode);
-        mani.writeUTF(CSVAnalyzer.formatRecord(record).toString()); //placeholder
+        recordWriter.writeObject(CSVAnalyzer.formatRecord(record));
 
         this.write(store.toByteArray());
     }
