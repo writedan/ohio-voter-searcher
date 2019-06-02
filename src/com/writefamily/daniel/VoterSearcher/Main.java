@@ -119,7 +119,6 @@ public class Main {
                 double transferred = 0.0;
 
                 InputStream inputStream = response.getEntity().getContent();
-
                 while ((n = inputStream.read()) != -1) {
                     dataStore.write(n);
                     transferred += 1;

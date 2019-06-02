@@ -17,6 +17,7 @@
 
 package com.writefamily.daniel.VoterSearcher;
 
+import com.writefamily.daniel.VoterSearcher.analysis.CSVAnalyzer;
 import org.apache.commons.csv.CSVRecord;
 
 import java.io.ByteArrayOutputStream;
@@ -82,7 +83,7 @@ public class Serializer {
 
         mani.writeByte(PacketCode.RECORD_FOUND.code);
         mani.writeInt(countyCode);
-        // TODO write record
+        mani.writeUTF(CSVAnalyzer.formatRecord(record).toString()); //placeholder
 
         this.write(store.toByteArray());
     }
