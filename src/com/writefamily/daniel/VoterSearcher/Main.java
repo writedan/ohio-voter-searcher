@@ -33,6 +33,7 @@ import org.apache.http.ssl.SSLContextBuilder;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 
 public class Main {
@@ -98,39 +99,49 @@ public class Main {
                 }
             }
 
+            Serializer serializer = new Serializer(System.out);
+
+            SSLContextBuilder builder = new SSLContextBuilder();
+            builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+            SSLConnectionSocketFactory scsf = new SSLConnectionSocketFactory(builder.build());
+
+            CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(scsf).build();
+
             for (int code : countyCodes) {
-                System.out.println(Main.OVR_BASE_URL + code);
-
-                SSLContextBuilder builder = new SSLContextBuilder();
-                builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-                SSLConnectionSocketFactory scsf = new SSLConnectionSocketFactory(builder.build());
-
-                CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(scsf).build();
                 HttpGet request = new HttpGet(Main.OVR_BASE_URL + code);
                 CloseableHttpResponse response = httpClient.execute(request);
 
                 int contentLength = Integer.parseInt(response.getFirstHeader("Content-Length").getValue());
+                serializer.beginCountyDownload(code, contentLength);
 
                 ByteArrayOutputStream dataStore = new ByteArrayOutputStream();
-                int n, d = 0;
-                System.out.println("0.0 %");
-                while ((n = response.getEntity().getContent().read()) != -1) {
+                int n, oldPercent = 0;
+                double transferred = 0.0;
+
+                InputStream inputStream = response.getEntity().getContent();
+
+                while ((n = inputStream.read()) != -1) {
                     dataStore.write(n);
-                    d += 1;
-                    double percent = Math.round(d / (double) contentLength * 100) / 100.0;
-                    if (percent % 5 == 0 && percent > 0) {
-                        System.out.println((percent * 100) + " %");
+                    transferred += 1;
+                    int percent = (int) ((transferred / contentLength) * 100);
+                    if (percent > oldPercent) {
+                        oldPercent = percent;
+                        serializer.countyDownloadProgress(code, percent);
                     }
                 }
+
                 byte[] data = dataStore.toByteArray();
+
+                serializer.countyComplete(code);
 
                 List<CSVRecord> records = CSVAnalyzer.analyze(new ByteArrayInputStream(data), filter);
                 for (CSVRecord record : records) {
-                    System.out.println(CSVAnalyzer.formatRecord(record).toString());
+                    serializer.recordFound(code, record);
                 }
             }
         } catch (Throwable error) {
             // TODO handle this
+            error.printStackTrace();
             System.exit(ErrorCode.GENERAL_ERROR.exitCode);
         }
     }
