@@ -62,20 +62,12 @@ public class Main {
         try {
             CSVFilter filter = CSVFilter.instance();
             for (String s : args) {
-                try {
-                    String[] arg = s.split("=");
-                    String key = arg[0];
-                    String val = arg[1];
+                String[] arg = s.split("=");
+                String key = arg[0];
+                String val = arg[1];
 
-                    CSVField field = CSVField.valueOf(key.toUpperCase());
-                    filter.filter(field, val); // returns self to facillitate chaining, but not necessary
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    // TODO handle this
-                    System.exit(ErrorCode.MALFORMED_PARAMETER.exitCode);
-                } catch (IllegalArgumentException e) {
-                    // TODO handle this too
-                    System.exit(ErrorCode.UNKNOWN_VALUE.exitCode);
-                }
+                CSVField field = CSVField.valueOf(key.toUpperCase());
+                filter.filter(field, val); // returns self to facillitate chaining, but not necessary
             }
 
             // we use the county values to isolate the files to download
