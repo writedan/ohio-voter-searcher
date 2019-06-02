@@ -10,7 +10,8 @@ This program is very greedy with bandwidth usage, hard disk usage, and CPU utili
 to your hard disk which **will** take a lot of space. You have been warned.
 
 This program outputs data in bytes that are meant to be read by another program 
-and transformed into a nicer presentation.
+and transformed into a nicer presentation. To find out more information, check the
+[Serializer](https://github.com/writedan/ohio-voter-searcher/blob/master/src/com/writefamily/daniel/VoterSearcher/Serializer.java) class.
 
 ## Usage Guide ##
 You can filter be the first name, last name, birth year, party affiliation, 
