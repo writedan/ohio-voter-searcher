@@ -36,7 +36,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 public class Main {
-    public static final TaskScheduler TASK_SCHEDULER = new TaskScheduler(Runtime.getRuntime().availableProcessors());
     public static final String OVR_BASE_URL = "https://www6.sos.state.oh.us/ords/f?p=VOTERFTP:DOWNLOAD::FILE:NO:2:P2_PRODUCT_NUMBER:";
     public static final String[] COUNTY_ARRAY = {
             "ADAMS", "ALLEN", "ASHLAND", "ASHTABULA", "ATHENS", "AUGLAIZE",
@@ -58,6 +57,9 @@ public class Main {
     public static final File BASE_DIR = new File(".ohio_voter_searcher" + File.separator);
 
     public static void main(String[] args) {
+        TaskScheduler scheduler = new TaskScheduler(2);
+        // two is a healthy number, as bandwidth limitations must also be taken into consideration
+
         Main.BASE_DIR.mkdirs();
         try {
             CSVFilter filter = CSVFilter.instance();
@@ -100,60 +102,68 @@ public class Main {
             CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(scsf).build();
 
             for (int code : countyCodes) {
-                File countySaveFile = new File(Main.BASE_DIR.getAbsolutePath() + File.separator + COUNTY_ARRAY[code - 1]);
-                //long days = ChronoUnit.DAYS.between(LocalDate.now(), LocalDate.ofEpochDay(CSVAnalyzer.getSaveDate(countySaveFile)));
-                long days = ChronoUnit.DAYS.between(LocalDate.ofEpochDay(CSVAnalyzer.getSaveDate(countySaveFile)), LocalDate.now());
+                scheduler.scheduleTask(() -> {
+                    try {
+                        File countySaveFile = new File(Main.BASE_DIR.getAbsolutePath() + File.separator + COUNTY_ARRAY[code - 1]);
+                        //long days = ChronoUnit.DAYS.between(LocalDate.now(), LocalDate.ofEpochDay(CSVAnalyzer.getSaveDate(countySaveFile)));
+                        long days = ChronoUnit.DAYS.between(LocalDate.ofEpochDay(CSVAnalyzer.getSaveDate(countySaveFile)), LocalDate.now());
 
-                InputStream inputStream;
-                OutputStream outputStream = null;
-                long contentLength;
-                if (days >= 8) {
-                    HttpGet request = new HttpGet(Main.OVR_BASE_URL + code);
-                    CloseableHttpResponse response = httpClient.execute(request);
+                        InputStream inputStream;
+                        OutputStream outputStream = null;
+                        long contentLength;
+                        if (days >= 8) {
+                            HttpGet request = new HttpGet(Main.OVR_BASE_URL + code);
+                            CloseableHttpResponse response = httpClient.execute(request);
 
-                    contentLength = Integer.parseInt(response.getFirstHeader("Content-Length").getValue());
-                    inputStream = response.getEntity().getContent();
+                            contentLength = Integer.parseInt(response.getFirstHeader("Content-Length").getValue());
+                            inputStream = response.getEntity().getContent();
 
-                    outputStream = new FileOutputStream(countySaveFile);
+                            outputStream = new FileOutputStream(countySaveFile);
 
-                    DataOutputStream dateWriter = new DataOutputStream(outputStream);
-                    dateWriter.writeLong(LocalDate.now().toEpochDay());
-                    dateWriter.flush();
-                } else {
-                    countySaveFile.createNewFile();
-                    inputStream = new FileInputStream(countySaveFile);
-                    contentLength = countySaveFile.length();
-                }
+                            DataOutputStream dateWriter = new DataOutputStream(outputStream);
+                            dateWriter.writeLong(LocalDate.now().toEpochDay());
+                            dateWriter.flush();
+                        } else {
+                            countySaveFile.createNewFile();
+                            inputStream = new FileInputStream(countySaveFile);
+                            contentLength = countySaveFile.length();
+                        }
 
-                serializer.beginCountyDownload(code, contentLength);
+                        serializer.beginCountyDownload(code, contentLength);
 
-                ByteArrayOutputStream dataStore = new ByteArrayOutputStream();
-                int n, oldPercent = 0;
-                double transferred = 0.0;
+                        ByteArrayOutputStream dataStore = new ByteArrayOutputStream();
+                        int n, oldPercent = 0;
+                        double transferred = 0.0;
 
-                while ((n = inputStream.read()) != -1) {
-                    dataStore.write(n);
-                    if (outputStream != null) {
-                        outputStream.write(n); // save file if it doesnt exist
-                        outputStream.flush();
+                        while ((n = inputStream.read()) != -1) {
+                            dataStore.write(n);
+                            if (outputStream != null) {
+                                outputStream.write(n); // save file if it doesnt exist
+                                outputStream.flush();
+                            }
+
+                            transferred += 1;
+                            int percent = (int) ((transferred / contentLength) * 100);
+                            if (percent > oldPercent) {
+                                oldPercent = percent;
+                                serializer.countyDownloadProgress(code, percent);
+                            }
+                        }
+
+                        byte[] data = dataStore.toByteArray();
+
+                        serializer.countyComplete(code);
+
+                        List<CSVRecord> records = CSVAnalyzer.analyze(new ByteArrayInputStream(data), filter);
+                        for (CSVRecord record : records) {
+                            serializer.recordFound(code, record);
+                        }
+                    } catch (Throwable error) {
+                        error.printStackTrace(System.err);
+                        System.exit(ErrorCode.GENERAL_ERROR.exitCode);
+                        // TODO more specific errors
                     }
-
-                    transferred += 1;
-                    int percent = (int) ((transferred / contentLength) * 100);
-                    if (percent > oldPercent) {
-                        oldPercent = percent;
-                        serializer.countyDownloadProgress(code, percent);
-                    }
-                }
-
-                byte[] data = dataStore.toByteArray();
-
-                serializer.countyComplete(code);
-
-                List<CSVRecord> records = CSVAnalyzer.analyze(new ByteArrayInputStream(data), filter);
-                for (CSVRecord record : records) {
-                    serializer.recordFound(code, record);
-                }
+                });
             }
         } catch (Throwable error) {
             // TODO handle this
