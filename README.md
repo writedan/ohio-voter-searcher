@@ -7,3 +7,6 @@ This program and its source code is licensed under the terms of the GPLv3 as pro
 
 This program is very greedy with bandwidth usage, memory usage, and CPU utilization. 
 Contributions are welcome to improve on that.
+
+This program outputs data in bytes that are meant to be read by another program 
+and transformed into a nicer presentation.
