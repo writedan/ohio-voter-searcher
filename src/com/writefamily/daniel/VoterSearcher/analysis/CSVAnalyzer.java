@@ -22,6 +22,8 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,12 +32,17 @@ import java.util.Map;
 public class CSVAnalyzer {
     protected static CSVFormat CSV_FORMAT = CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim();
 
-    public static List<CSVRecord> analyze(InputStream inputStream, CSVFilter filter) throws IOException {
+    public static List<CSVRecord> analyze(InputStream inputStream, CSVFilter filter) throws IOException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Reader reader = new BufferedReader(new InputStreamReader(inputStream));
         CSVParser parser = new CSVParser(reader, CSVAnalyzer.CSV_FORMAT);
 
+        // we are going to do some ugly code here to get the nextRecord() method available
+        Method method = parser.getClass().getDeclaredMethod("nextRecord");
+        method.setAccessible(true);
+
         List<CSVRecord> records = new ArrayList<>();
-        for (CSVRecord record : parser.getRecords()) {
+        CSVRecord record;
+        while ((record = (CSVRecord) method.invoke(parser)) != null) {
             if (filter.isInFilter(record)) {
                 records.add(record);
             }
